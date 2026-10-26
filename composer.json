@@ -1,0 +1,41 @@
+{
+    "name": "hbernard/helpdesk-ai",
+    "description": "projet d'application gestion de tickets RAG PHP + LLPhant + Ollama + Docker",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Hervé BERNARD",
+            "email": "hbernard.emploi@gmail.com"
+        }
+    ],
+    "scripts": {
+        "lint": "@php tools/check.php",
+        "test": [
+            "@php tests/config.php",
+            "@php tests/ticket-validator.php",
+            "@php tests/ticket-classifier.php",
+            "@php tests/resolution-generator.php",
+            "@php tests/csrf.php",
+            "@php tests/http.php",
+            "@php tests/llphant-clients.php",
+            "@php tests/qdrant.php"
+        ],
+        "check": [
+            "@lint",
+            "@test"
+        ]
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require-dev": {
+        "symfony/var-dumper": "8.2.x-dev"
+    },
+    "require": {
+        "theodo-group/llphant": "~1.0.6"
+    }
+}

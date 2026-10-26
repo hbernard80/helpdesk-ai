@@ -1,0 +1,69 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    ports:
+      - "127.0.0.1:8081:80"
+    environment:
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+      PROCEDURES_DIRECTORY: ${PROCEDURES_DIRECTORY:-/var/www/procedures}
+      PROCEDURES_INDEX_PATH: ${PROCEDURES_INDEX_PATH:-/var/www/storage/procedures-index.json}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      QDRANT_COLLECTION: ${QDRANT_COLLECTION:-helpdesk_procedures}
+      DB_HOST: ${DB_HOST:-db}
+      DB_NAME: ${DB_NAME:-helpdesk}
+      DB_USER: ${DB_USER:-helpdesk}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - db
+      - ollama     
+      - qdrant
+    volumes:
+      - ./src:/var/www/html  
+      - ./src:/var/www/src:ro  
+      - ./vendor:/var/www/vendor:ro
+      - ./documents/fictifs:/var/www/procedures:ro
+      - ./storage:/var/www/storage
+
+  qdrant:
+    image: qdrant/qdrant:v1.17.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-helpdesk}
+      MYSQL_USER: ${DB_USER:-helpdesk}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: helpdesk-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    depends_on:
+      - db
+  
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  mysql_data:
+  ollama_data:
+  qdrant_data:

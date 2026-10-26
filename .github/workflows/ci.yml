@@ -1,0 +1,57 @@
+name: HelpDesk AI - CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  php-checks:
+    name: PHP Checks and Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: curl, mbstring, pdo_mysql
+          tools: composer
+          coverage: none
+
+      - name: Validate Composer configuration
+        run: composer validate --no-check-publish
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Check PHP syntax, formatting and tests
+        run: composer check
+
+  docker-checks:
+    name: Docker Configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose
+        env:
+          DB_PASSWORD: ci_dummy_password
+          DB_ROOT_PASSWORD: ci_dummy_root_password
+        run: docker compose config --quiet
+
+      - name: Build PHP container
+        env:
+          DB_PASSWORD: ci_dummy_password
+          DB_ROOT_PASSWORD: ci_dummy_root_password
+        run: docker compose build app
